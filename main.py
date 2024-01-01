@@ -1,18 +1,95 @@
+import threading
 from tkinter import *
 import random
 import ttkthemes
 from tkinter import ttk
+from time import sleep
 
 def change_bg(widget):
     widget.config(bg='blue')
     widget.after(100,lambda:widget.config(bg='black'))
 
+total_time = 60
+time = 0
+wrong_words = 0
+elapsed_time_in_minut = 0
+
+def start_timer():
+    start_button.config(state=DISABLED)
+    global time
+    text_aria.config(state= NORMAL)
+    text_aria.focus()
+
+    # elaps timer increasing and remain time decreasing
+    for time in range(1,total_time+1):
+        elapsed_timer.config(text=time)
+        remain_timer.config(text= total_time-time)
+        sleep(1)
+        root.update()
+    text_aria.config(state= DISABLED)
+    reset_button.config(state=NORMAL)
+
+def count():
+    global wrong_words
+    global elapsed_time_in_minut 
+
+    while time != total_time:
+        entered_data = text_aria.get(1.0,END).split()
+        total_words = len(entered_data)
+
+    total_word_cnt.config(text=total_words)
+
+    given_data = para_lable['text'].split()
+    for pair in list(zip(entered_data,given_data)):
+        if pair[0] != pair[1]:
+            wrong_words +=1
+
+    wrong_word_cnt.config(text= wrong_words)
+    elapsed_time_in_minut = time/60
+    wpm = (total_words - wrong_words)/elapsed_time_in_minut
+    wpm_cnt.config(text= wpm)
+
+    gross_wpm =(total_words/elapsed_time_in_minut)
+    accuracy = round(wpm/gross_wpm * 100)
+    accuracy_cnt.config(text=str(accuracy)+'%')
+
+def start():
+    t1 = threading.Thread(target=start_timer)
+    t1.start()
+
+    t2 = threading.Thread(target=count)
+    t2.start()
+
+def reset():
+    global time
+    global elapsed_time_in_minut
+    global wrong_words 
+
+    start_button.config(state=NORMAL)
+    reset_button.config(state=DISABLED)
+    text_aria.config(state=NORMAL)
+    text_aria.delete(1.0,END)
+    text_aria.config(state=DISABLED)
+
+    para_lable.config(text=paragraph_list[random.randint(0,len(paragraph_list)-1)])
+    elapsed_timer.config(text='0')
+    remain_timer.config(text=0)
+    wpm_cnt.config(text=0)
+    accuracy_cnt.config(text= 0)
+    total_word_cnt.config(text=0)
+    wrong_word_cnt.config(text=0)
+    time = 0
+    elapsed_time_in_minut = 0
+    wrong_words = 0
+
+# =============================================================================
 root = ttkthemes.ThemedTk()
 root.get_themes()
 root.set_theme('radiance')
 
 root.geometry('940x735+200+10')
 root.resizable(0,0)
+root.overrideredirect(True)
 
 main_frame = Frame(root,bd=4) # width='50', height='30',bg='orange'
 main_frame.grid()
@@ -21,7 +98,7 @@ main_frame.grid()
 title_frame = Frame(main_frame,bg='orange')
 title_frame.grid()
 title_lable = Label(title_frame, text="Typing Master",font=('roboto', 20, 'bold'),bg='goldenrod3',fg='white',
-                    width=55,bd=10)
+                    width=54,bd=10)
 title_lable.grid(pady=5)
 
 # paragraph frame start here ---------------------
@@ -75,13 +152,13 @@ remain_timer.grid(row=0,column=3,padx=5)
 
 wpm_lable = Label(frame_output, text='WPM',font=('Tahoma',12,'bold'),fg='red')
 wpm_lable.grid(row=0,column=4,padx=5)
-wpm = Label(frame_output, text='0',font=('Tahoma',12,'bold'))
-wpm.grid(row=0,column=5,padx=5)
+wpm_cnt = Label(frame_output, text='0',font=('Tahoma',12,'bold'))
+wpm_cnt.grid(row=0,column=5,padx=5)
 
 accuracy_labale = Label(frame_output, text='Accuracy',font=('Tahoma',12,'bold'),fg='red')
 accuracy_labale.grid(row=0,column=6,padx=5)
-total_word_cnt = Label(frame_output, text='0',font=('Tahoma',12,'bold'))
-total_word_cnt.grid(row=0,column=7,padx=5)
+accuracy_cnt = Label(frame_output, text='0',font=('Tahoma',12,'bold'))
+accuracy_cnt.grid(row=0,column=7,padx=5)
 
 total_word_lable = Label(frame_output, text='Total Word',font=('Tahoma',12,'bold'),fg='red')
 total_word_lable.grid(row=0,column=8,padx=5)
@@ -97,13 +174,13 @@ wrong_word_cnt.grid(row=0,column=11,padx=5)
 button_frame = Frame(main_frame)
 button_frame.grid(row=4,column=0)
 
-start_button = ttk.Button(button_frame, text="Start")
+start_button = ttk.Button(button_frame, text="Start",command=start)
 start_button.grid(row=0,column=0, padx= 10)
 
-reset_button = ttk.Button(button_frame, text="Reset",state= DISABLED)
+reset_button = ttk.Button(button_frame, text="Reset",state= DISABLED,command=reset)
 reset_button.grid(row=0,column=1, padx= 10)
 
-exit_button = ttk.Button(button_frame, text="Exit")
+exit_button = ttk.Button(button_frame, text="Exit",command=root.destroy)
 exit_button.grid(row=0,column=2, padx= 10)
 
 # keyboard frame start here ------------------
